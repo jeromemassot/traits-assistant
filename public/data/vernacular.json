@@ -1,0 +1,19 @@
+
+{
+  "lion": {
+    "scientific_name": "Panthera leo",
+    "traits": ["Apex predator", "Carnivore", "Social species", "Found in Africa and India"]
+  },
+  "tiger": {
+    "scientific_name": "Panthera tigris",
+    "traits": ["Largest cat species", "Striped coat", "Solitary hunter", "Endangered species"]
+  },
+  "polar bear": {
+    "scientific_name": "Ursus maritimus",
+    "traits": ["Marine mammal", "Adapted for cold climates", "Largest land carnivore", "Vulnerable species"]
+  },
+  "blue whale": {
+    "scientific_name": "Balaenoptera musculus",
+    "traits": ["Largest animal on Earth", "Baleen whale", "Feeds on krill", "Marine mammal"]
+  }
+}

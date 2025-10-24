@@ -1,0 +1,5 @@
+{
+  "name": "Traits Search & Patterns Analysis",
+  "description": "An application to search for traits of species from the Encyclopedia of Life, enhanced with a Gemini-powered chatbot for advanced queries.",
+  "requestFramePermissions": []
+}
