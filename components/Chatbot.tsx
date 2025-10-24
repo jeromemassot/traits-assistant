@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage, ChatMode } from '../types';
-import { runStandardChat, runGroundedChat, runThinkingChat } from '../services/geminiService';
+import { runChat } from '../services/geminiService';
 import ReactMarkdown from 'react-markdown';
 
 const WELCOME_MESSAGE: ChatMessage = {
@@ -77,40 +77,18 @@ export const Chatbot: React.FC = () => {
         setInput('');
         setIsLoading(true);
 
-        try {
-            let response;
-            switch (chatMode) {
-                case 'grounded':
-                    response = await runGroundedChat(currentInput);
-                    break;
-                case 'thinking':
-                    response = await runThinkingChat(currentInput);
-                    break;
-                default:
-                    response = await runStandardChat(currentInput);
-            }
-            
-            const botMessage: ChatMessage = {
-                id: (Date.now() + 1).toString(),
-                sender: 'bot',
-                text: response.text,
-                sources: response.sources.length > 0 ? response.sources : undefined,
-                mode: chatMode,
-            };
-            setMessages(prev => [...prev, botMessage]);
+        const response = await runChat(currentInput, chatMode);
+        
+        const botMessage: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            sender: 'bot',
+            text: response.text,
+            sources: response.sources.length > 0 ? response.sources : undefined,
+            mode: chatMode,
+        };
+        setMessages(prev => [...prev, botMessage]);
 
-        } catch (error) {
-            console.error("Chatbot Error:", error);
-            const errorMessage: ChatMessage = {
-                id: (Date.now() + 1).toString(),
-                sender: 'bot',
-                text: 'Sorry, something went wrong. Please try again.',
-                mode: chatMode,
-            };
-            setMessages(prev => [...prev, errorMessage]);
-        } finally {
-            setIsLoading(false);
-        }
+        setIsLoading(false);
     };
     
     const getBotMessageBg = (mode?: ChatMode) => {

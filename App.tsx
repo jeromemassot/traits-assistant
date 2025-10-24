@@ -19,16 +19,21 @@ const App: React.FC = () => {
         const fetchData = async () => {
             try {
                 const [vernacularRes, scientificRes, phyloRes] = await Promise.all([
-                    fetch('/data/vernacular.json'),
-                    fetch('/data/scientific.json'),
-                    fetch('/data/phylo.json')
+                    fetch('/api/data/vernacular'),
+                    fetch('/api/data/scientific'),
+                    fetch('/api/data/phylo')
                 ]);
+
+                if (!vernacularRes.ok || !scientificRes.ok || !phyloRes.ok) {
+                    throw new Error(`A data fetch failed with status: ${vernacularRes.status}, ${scientificRes.status}, ${phyloRes.status}`);
+                }
+
                 setVernacularData(await vernacularRes.json());
                 setScientificData(await scientificRes.json());
                 setPhyloData(await phyloRes.json());
             } catch (error) {
                 console.error("Failed to load data:", error);
-                setSearchResults({ type: 'error', data: 'Failed to load species data.' });
+                setSearchResults({ type: 'error', data: 'Failed to load species data from the server.' });
             } finally {
                 setLoading(false);
             }
