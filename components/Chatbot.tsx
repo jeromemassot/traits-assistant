@@ -10,8 +10,8 @@ const WELCOME_MESSAGE: ChatMessage = {
     text: `### Welcome to the Traits Assistant!
     
 You can ask me questions about:
-- Species traits found in our databases.
-- Statistical patterns in the trait data.
+- **Species** traits found in our databases.
+- **Statistical patterns** in the trait data.
 - Use **Grounded Search** to find up-to-date information.
 - Use **Deep Analysis** for complex queries and to expand on existing data.`
 };
@@ -77,6 +77,9 @@ export const Chatbot: React.FC = () => {
         setInput('');
         setIsLoading(true);
 
+        // DEBUG
+        console.log(currentInput)
+
         const response = await runChat(currentInput, chatMode);
         
         const botMessage: ChatMessage = {
@@ -114,7 +117,7 @@ export const Chatbot: React.FC = () => {
             <div ref={chatContainerRef} className="flex-grow overflow-y-auto pr-4 -mr-4 mb-4 border border-slate-200 rounded-md p-4 bg-slate-50/50">
                 {messages.map(message => (
                     <div key={message.id} className={`flex mb-4 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`p-3 rounded-lg max-w-lg ${message.sender === 'user' ? 'bg-slate-800 text-white' : `${getBotMessageBg(message.mode)} text-slate-800`}`}>
+                        <div className={`p-3 rounded-lg max-w-lg ${message.sender === 'user' ? 'bg-slate-100 text-white' : `${getBotMessageBg(message.mode)} text-slate-800`}`}>
                             <div className="prose prose-sm prose-slate max-w-none text-left">
                                 <ReactMarkdown>{message.text}</ReactMarkdown>
                             </div>
