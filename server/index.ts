@@ -1,9 +1,8 @@
-
-import express from 'express';
-import cors from 'cors';
-// FIX: Switched from @google-cloud/vertexai to @google/genai to align with coding guidelines.
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
 import { Storage } from '@google-cloud/storage';
+import express from 'express';
+import cors from 'cors';
+import 'dotenv/config';
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -11,15 +10,14 @@ const port = process.env.PORT || 8080;
 app.use(cors());
 app.use(express.json());
 
-// FIX: Initialize @google/genai client using API_KEY from environment variables as per guidelines.
-// The GCS client will continue to use Application Default Credentials.
-if (!process.env.API_KEY) {
-    console.error("API_KEY environment variable not set. Exiting.");
+// Initialize @google/genai client using API_KEY from environment variables as per guidelines.
+if (!process.env.GEMINI_API_KEY) {
+    console.error("GEMINI_API_KEY environment variable not set. Exiting.");
     process.exit(1);
 }
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-
+// The GCS client will continue to use Application Default Credentials.
 const project = process.env.GOOGLE_CLOUD_PROJECT;
 
 if (!project) {
@@ -71,13 +69,14 @@ app.get('/api/data/:type', async (req, res) => {
 app.post('/api/chat', async (req, res) => {
     const { prompt, mode } = req.body;
 
+    // DEBUG
+    console.log('Server found for chat ...')
+
     if (!prompt) {
         return res.status(400).json({ text: 'Prompt is required', sources: [] });
     }
 
     try {
-        // FIX: Refactored to use ai.models.generateContent and updated model names and configs
-        // to align with @google/genai SDK guidelines.
         let model: string;
         let config: any = {
             maxOutputTokens: 8192,
@@ -106,14 +105,20 @@ app.post('/api/chat', async (req, res) => {
         const response = await ai.models.generateContent({
             model,
             contents: prompt,
-            config: { ...config, safetySettings },
-            tools: tools.length > 0 ? tools : undefined,
+            config: { 
+                ...config, 
+                safetySettings,
+                tools: tools.length > 0 ? tools : undefined
+            }
         });
+
+        // DEBUG
+        console.log(response)
         
-        // FIX: Use response.text accessor for simpler text extraction.
+        // Use response.text accessor for simpler text extraction.
         const text = response.text;
         
-        // FIX: Extract grounding sources from groundingChunks as per guidelines.
+        // Extract grounding sources from groundingChunks as per guidelines.
         const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
         const sources = groundingChunks
             ?.filter(chunk => chunk.web?.uri && chunk.web?.title)
