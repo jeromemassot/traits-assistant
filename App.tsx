@@ -5,7 +5,7 @@ import { SpeciesSearch } from './components/SpeciesSearch';
 import { PhyloSearch } from './components/PhyloSearch';
 import { SearchResult } from './types';
 import { SearchResultsDisplay } from './components/SearchResultsDisplay';
-import { EOLIcon, SmithsonianIcon } from './components/Icons';
+import { DeepmindIcon, SmithsonianIcon } from './components/Icons';
 import { Chatbot } from './components/Chatbot';
 
 const App: React.FC = () => {
@@ -82,17 +82,14 @@ const App: React.FC = () => {
         <div className="min-h-screen flex flex-col">
             <Header />
             <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="text-center">
+                <div className="text">
                     <h1 className="text-4xl sm:text-5xl font-bold text-slate-900 tracking-tight">
                         Traits Search & Patterns Analysis
                     </h1>
-                    <div className="flex justify-center items-center gap-4 my-6">
-                        <EOLIcon />
+                    <div className="flex justify-left items-center gap-8 my-6">
+                        <DeepmindIcon />
                         <SmithsonianIcon />
                     </div>
-                    <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
-                        Use the search engine to find the traits information for EOL.org species.
-                    </p>
                 </div>
 
                 <div className="mt-10 grid grid-cols-1 lg:grid-cols-4 gap-8">
