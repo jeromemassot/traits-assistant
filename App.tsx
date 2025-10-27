@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Header } from './components/Header';
 import { StatCard } from './components/StatCard';
 import { SpeciesSearch } from './components/SpeciesSearch';
@@ -7,41 +7,15 @@ import { SearchResult } from './types';
 import { SearchResultsDisplay } from './components/SearchResultsDisplay';
 import { DeepmindIcon, SmithsonianIcon } from './components/Icons';
 import { Chatbot } from './components/Chatbot';
+import { search } from './services/firestoreService';
+import { useAuth } from './contexts/AuthContext';
 
 const App: React.FC = () => {
-    const [vernacularData, setVernacularData] = useState<Record<string, any> | null>(null);
-    const [scientificData, setScientificData] = useState<Record<string, any> | null>(null);
-    const [phyloData, setPhyloData] = useState<Record<string, any> | null>(null);
     const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
-    const [loading, setLoading] = useState<boolean>(true);
+    const [loading, setLoading] = useState<boolean>(false);
+    const { token } = useAuth();
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [vernacularRes, scientificRes, phyloRes] = await Promise.all([
-                    fetch('/api/data/vernacular'),
-                    fetch('/api/data/scientific'),
-                    fetch('/api/data/phylo')
-                ]);
-
-                if (!vernacularRes.ok || !scientificRes.ok || !phyloRes.ok) {
-                    throw new Error(`A data fetch failed with status: ${vernacularRes.status}, ${scientificRes.status}, ${phyloRes.status}`);
-                }
-
-                setVernacularData(await vernacularRes.json());
-                setScientificData(await scientificRes.json());
-                setPhyloData(await phyloRes.json());
-            } catch (error) {
-                console.error("Failed to load data:", error);
-                setSearchResults({ type: 'error', data: 'Failed to load species data from the server.' });
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, []);
-
-    const handleSpeciesSearch = useCallback((query: string, isScientific: boolean, isFuzzy: boolean) => {
+    const handleSpeciesSearch = useCallback(async (query: string, isScientific: boolean, isFuzzy: boolean) => {
         const searchTerm = query.toLowerCase().trim();
         if (!searchTerm) {
             setSearchResults(null);
@@ -54,29 +28,36 @@ const App: React.FC = () => {
             return;
         }
 
-        const data = isScientific ? scientificData : vernacularData;
-        const result = data?.[searchTerm];
-
-        if (result) {
+        setLoading(true);
+        try {
+            const result = await search(searchTerm, 'species', isScientific, token);
             setSearchResults({ type: 'species', query: query, data: result });
-        } else {
+        } catch (error) {
+            console.error("Search failed:", error);
             setSearchResults({ type: 'notFound', data: `No results found for "${query}".` });
+        } finally {
+            setLoading(false);
         }
-    }, [scientificData, vernacularData]);
+    }, [token]);
 
-    const handlePhyloSearch = useCallback((query: string) => {
+    const handlePhyloSearch = useCallback(async (query: string) => {
         const searchTerm = query.toLowerCase().trim();
         if (!searchTerm) {
             setSearchResults(null);
             return;
         }
-        const result = phyloData?.[searchTerm];
-        if (result) {
+
+        setLoading(true);
+        try {
+            const result = await search(searchTerm, 'phylo', false, token);
             setSearchResults({ type: 'phylo', query: query, data: result });
-        } else {
+        } catch (error) {
+            console.error("Search failed:", error);
             setSearchResults({ type: 'notFound', data: `No results found for "${query}".` });
+        } finally {
+            setLoading(false);
         }
-    }, [phyloData]);
+    }, [token]);
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -103,12 +84,18 @@ const App: React.FC = () => {
                     
                     <div className="lg:col-span-3">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <SpeciesSearch onSearch={handleSpeciesSearch} disabled={loading} />
-                            <PhyloSearch onSearch={handlePhyloSearch} disabled={loading} />
+                            <SpeciesSearch onSearch={handleSpeciesSearch} disabled={loading || !token} />
+                            <PhyloSearch onSearch={handlePhyloSearch} disabled={loading || !token} />
                         </div>
 
                         <div className="mt-8">
-                            <SearchResultsDisplay results={searchResults} />
+                            {loading ? (
+                                <div className="text-center py-10">
+                                    <p className="text-lg text-slate-600">Searching...</p>
+                                </div>
+                            ) : (
+                                <SearchResultsDisplay results={searchResults} />
+                            )}
                         </div>
                         
                         <div className="mt-12">
