@@ -3,6 +3,7 @@ import { Firestore } from '@google-cloud/firestore';
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
+import { isSetIterator } from 'util/types';
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -18,9 +19,12 @@ if (!process.env.GEMINI_API_KEY) {
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Initialize Firestore
-const firestore = new Firestore({
-    projectId: process.env.GOOGLE_CLOUD_PROJECT,
-});
+const firestore = new Firestore(
+    {
+        projectId: process.env.GOOGLE_CLOUD_PROJECT,
+        databaseId: 'traits'
+    }
+);
 
 const safetySettings = [
     { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
@@ -33,6 +37,8 @@ const safetySettings = [
 app.post('/api/search', async (req, res) => {
     const { query, type, isScientific } = req.body;
 
+    console.log(query, type, isScientific)
+
     if (!query) {
         return res.status(400).json({ message: 'Query is required' });
     }
@@ -40,7 +46,7 @@ app.post('/api/search', async (req, res) => {
     try {
         let collectionName = '';
         if (type === 'species') {
-            collectionName = isScientific ? 'scientific-names' : 'vernacular-names';
+            collectionName = isScientific ? 'per-scientific-name' : 'per-vernacular-name';
         } else if (type === 'phylo') {
             collectionName = 'phylogenetic-tree';
         }
@@ -50,7 +56,7 @@ app.post('/api/search', async (req, res) => {
         }
 
         const collectionRef = firestore.collection(collectionName);
-        const snapshot = await collectionRef.where('name', '==', query).limit(1).get();
+        const snapshot = await collectionRef.where('Document name', '==', query).limit(1).get();
 
         if (snapshot.empty) {
             return res.status(404).json({ message: 'No results found' });
