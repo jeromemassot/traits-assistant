@@ -19,6 +19,9 @@ export const search = async (query: string, type: 'species' | 'phylo', isScienti
             body: JSON.stringify({ query, type, isScientific }),
         });
 
+        console.log("Query to Firstore: ", JSON.stringify({ query, type, isScientific }))
+        console.log("Response from Firestore: ", response)
+
         const data = await response.json();
 
         if (!response.ok) {
