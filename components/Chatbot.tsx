@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage, ChatMode } from '../types';
 import { runChat } from '../services/geminiService';
 import ReactMarkdown from 'react-markdown';
+import { useAuth } from '../contexts/AuthContext';
 
 const WELCOME_MESSAGE: ChatMessage = {
     id: 'initial-welcome',
@@ -46,6 +47,7 @@ export const Chatbot: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [chatMode, setChatMode] = useState<ChatMode>('standard');
     const chatContainerRef = useRef<HTMLDivElement>(null);
+    const { token } = useAuth();
 
     useEffect(() => {
         setMessages([WELCOME_MESSAGE]);
@@ -80,7 +82,7 @@ export const Chatbot: React.FC = () => {
         // DEBUG
         console.log(currentInput)
 
-        const response = await runChat(currentInput, chatMode);
+        const response = await runChat(currentInput, chatMode, token);
         
         const botMessage: ChatMessage = {
             id: (Date.now() + 1).toString(),

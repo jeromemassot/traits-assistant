@@ -1,5 +1,5 @@
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
-import { Storage } from '@google-cloud/storage';
+import { Firestore } from '@google-cloud/firestore';
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
@@ -17,22 +17,10 @@ if (!process.env.GEMINI_API_KEY) {
 }
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// The GCS client will continue to use Application Default Credentials.
-const project = process.env.GOOGLE_CLOUD_PROJECT;
-
-if (!project) {
-    console.error("GOOGLE_CLOUD_PROJECT environment variable not set. Exiting.");
-    process.exit(1);
-}
-
-const storage = new Storage({ projectId: project });
-
-const BUCKET_NAME = 'eol_dataset';
-const DATA_FILES = {
-    vernacular: 'traits/traits_assistant_data/traits/per-species/traits_per_vernacular_name.json',
-    scientific: 'traits/traits_assistant_data/traits/per-species/traits_per_scientific_name.json',
-    phylo: 'traits/traits_assistant_data/traits/statistics/most_common_traits_patterns.json'
-};
+// Initialize Firestore
+const firestore = new Firestore({
+    projectId: process.env.GOOGLE_CLOUD_PROJECT,
+});
 
 const safetySettings = [
     { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
@@ -41,27 +29,39 @@ const safetySettings = [
     { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
 ];
 
-// Endpoint to proxy data from GCS, authenticated via service account
-app.get('/api/data/:type', async (req, res) => {
-    const { type } = req.params;
-    const filePath = DATA_FILES[type as keyof typeof DATA_FILES];
+// Endpoint for search
+app.post('/api/search', async (req, res) => {
+    const { query, type, isScientific } = req.body;
 
-    if (!filePath) {
-        return res.status(404).send('Data type not found');
+    if (!query) {
+        return res.status(400).json({ message: 'Query is required' });
     }
 
     try {
-        const file = storage.bucket(BUCKET_NAME).file(filePath);
-        res.setHeader('Content-Type', 'application/json');
-        file.createReadStream()
-            .on('error', (err) => {
-                console.error(`Error streaming file from GCS: ${filePath}`, err);
-                res.status(500).send('Error reading data file');
-            })
-            .pipe(res);
+        let collectionName = '';
+        if (type === 'species') {
+            collectionName = isScientific ? 'scientific-names' : 'vernacular-names';
+        } else if (type === 'phylo') {
+            collectionName = 'phylogenetic-tree';
+        }
+
+        if (!collectionName) {
+            return res.status(400).json({ message: 'Invalid search type' });
+        }
+
+        const collectionRef = firestore.collection(collectionName);
+        const snapshot = await collectionRef.where('name', '==', query).limit(1).get();
+
+        if (snapshot.empty) {
+            return res.status(404).json({ message: 'No results found' });
+        }
+
+        const result = snapshot.docs[0].data();
+        res.json(result);
+
     } catch (error) {
-        console.error('GCS Fetch Error:', error);
-        res.status(500).send('Failed to fetch data from storage');
+        console.error('Firestore Search Error:', error);
+        res.status(500).send('Failed to fetch data from Firestore');
     }
 });
 

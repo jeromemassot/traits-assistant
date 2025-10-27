@@ -7,7 +7,7 @@ interface GeminiResponse {
     sources: GroundingSource[];
 }
 
-export const runChat = async (prompt: string, mode: ChatMode): Promise<GeminiResponse> => {
+export const runChat = async (prompt: string, mode: ChatMode, token: string | null): Promise<GeminiResponse> => {
 
     // DEBUG
     console.log(`Prompt received by runChat in geminiServie: ${prompt}`)
@@ -15,12 +15,18 @@ export const runChat = async (prompt: string, mode: ChatMode): Promise<GeminiRes
     // Construct the full URL
     const API_URL = `${API_BASE_URL}/api/chat`;
 
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+    };
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers,
             body: JSON.stringify({ prompt, mode }),
         });
 
