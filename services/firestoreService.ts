@@ -1,16 +1,11 @@
-import.meta.env.VITE_API_BASE_URL;
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.API_BASE_URL;
 
-export const search = async (query: string, type: 'species' | 'phylo', isScientific: boolean, token: string | null): Promise<any> => {
+export const search = async (query: string, type: 'species' | 'phylo', isScientific: boolean): Promise<any> => {
     const API_URL = `${API_BASE_URL}/api/search`;
 
     const headers: HeadersInit = {
         'Content-Type': 'application/json',
     };
-
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
 
     try {
         const response = await fetch(API_URL, {

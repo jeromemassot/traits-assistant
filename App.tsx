@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { Header } from './components/Header';
 import { StatCard } from './components/StatCard';
@@ -8,12 +9,10 @@ import { SearchResultsDisplay } from './components/SearchResultsDisplay';
 import { DeepmindIcon, SmithsonianIcon } from './components/Icons';
 import { Chatbot } from './components/Chatbot';
 import { search } from './services/firestoreService';
-import { useAuth } from './contexts/AuthContext';
 
 const App: React.FC = () => {
     const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
-    const { token } = useAuth();
 
     const handleSpeciesSearch = useCallback(async (query: string, isScientific: boolean, isFuzzy: boolean) => {
         const searchTerm = query.toLowerCase().trim();
@@ -30,7 +29,7 @@ const App: React.FC = () => {
 
         setLoading(true);
         try {
-            const result = await search(searchTerm, 'species', isScientific, token);
+            const result = await search(searchTerm, 'species', isScientific);
             setSearchResults({ type: 'species', query: query, data: result });
         } catch (error) {
             console.error("Search failed:", error);
@@ -38,7 +37,7 @@ const App: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [token]);
+    }, []);
 
     const handlePhyloSearch = useCallback(async (query: string) => {
         const searchTerm = query.toLowerCase().trim();
@@ -49,7 +48,7 @@ const App: React.FC = () => {
 
         setLoading(true);
         try {
-            const result = await search(searchTerm, 'phylo', false, token);
+            const result = await search(searchTerm, 'phylo', false);
             setSearchResults({ type: 'phylo', query: query, data: result });
         } catch (error) {
             console.error("Search failed:", error);
@@ -57,7 +56,7 @@ const App: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [token]);
+    }, []);
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -84,8 +83,8 @@ const App: React.FC = () => {
                     
                     <div className="lg:col-span-3">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <SpeciesSearch onSearch={handleSpeciesSearch} disabled={loading || !token} />
-                            <PhyloSearch onSearch={handlePhyloSearch} disabled={loading || !token} />
+                            <SpeciesSearch onSearch={handleSpeciesSearch} disabled={loading} />
+                            <PhyloSearch onSearch={handlePhyloSearch} disabled={loading} />
                         </div>
 
                         <div className="mt-8">

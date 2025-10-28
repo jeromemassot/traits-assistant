@@ -1,13 +1,12 @@
 import { GroundingSource, ChatMode } from "../types";
-import.meta.env.VITE_API_BASE_URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.API_BASE_URL;
 
 interface GeminiResponse {
     text: string;
     sources: GroundingSource[];
 }
 
-export const runChat = async (prompt: string, mode: ChatMode, token: string | null): Promise<GeminiResponse> => {
+export const runChat = async (prompt: string, mode: ChatMode): Promise<GeminiResponse> => {
 
     // DEBUG
     console.log(`Prompt received by runChat in geminiServie: ${prompt}`)
@@ -18,10 +17,6 @@ export const runChat = async (prompt: string, mode: ChatMode, token: string | nu
     const headers: HeadersInit = {
         'Content-Type': 'application/json',
     };
-
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
 
     try {
         const response = await fetch(API_URL, {

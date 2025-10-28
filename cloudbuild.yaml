@@ -1,0 +1,22 @@
+substitutions:
+  _SERVICE_NAME: traits-assistant-frontend
+  _PROJECT_ID: gdm-biosphere-dev
+  _REPOSITORY_ID : genai-artifacts
+
+steps:
+# Build the container image
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-t', 'us-central1-docker.pkg.dev/${_PROJECT_ID}/${_REPOSITORY_ID}/${_SERVICE_NAME}', '.']
+
+# Push the container image to Container Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'us-central1-docker.pkg.dev/${_PROJECT_ID}/${_REPOSITORY_ID}/${_SERVICE_NAME}']
+
+serviceAccount: 'projects/gdm-biosphere-dev/serviceAccounts/gemini-application-sa@gdm-biosphere-dev.iam.gserviceaccount.com'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+# Store image in the Google Artifact Registry
+images:
+- us-central1-docker.pkg.dev/${_PROJECT_ID}/${_REPOSITORY_ID}/${_SERVICE_NAME}
